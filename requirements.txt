@@ -1,0 +1,47 @@
+# 可编辑区块链变色龙哈希研究框架 - 依赖配置
+# 文件: requirements.txt
+
+# ==================== 核心依赖（必须） ====================
+# Python版本要求
+python_version >= "3.8"
+
+# 密码学库 - 用于RSA密钥生成、序列化等核心密码学操作
+cryptography >= 41.0.0
+aiosqlite
+
+#charm-crypto依赖
+#pyparsing<2.4.1,>=2.1.5
+#hypothesis
+
+# ==================== 研究扩展依赖（推荐） ====================
+# 性能分析 - 用于PerformanceProfiler的内存测量
+# 安装命令: pip install -r requirements.txt[performance]
+psutil >= 5.9.0; extra == "performance"
+
+# 数据可视化 - 用于绘制性能图表和分析结果
+# 安装命令: pip install -r requirements.txt[analysis]
+matplotlib >= 3.7.0; extra == "analysis"
+pandas >= 2.0.0; extra == "analysis"
+
+# Jupyter支持 - 用于交互式研究环境
+# 安装命令: pip install -r requirements.txt[notebook]
+jupyter >= 1.0.0; extra == "notebook"
+
+
+# ==================== 开发工具（可选） ====================
+# 代码静态检查 - 提升代码质量
+flake8 >= 6.0.0; extra == "dev"
+black >= 23.0.0; extra == "dev"
+
+# 测试框架 - 用于编写单元测试
+pytest >= 7.4.0; extra == "dev"
+hypothesis >= 6.82.0; extra == "dev"  # 模糊测试支持
+
+# 类型检查 - 确保类型安全
+mypy >= 1.5.0; extra == "dev"
+
+
+# ==================== 文档生成（可选） ====================
+# Sphinx文档 - 自动生成API文档
+sphinx >= 7.0.0; extra == "docs"
+sphinx-rtd-theme >= 1.3.0; extra == "docs"
