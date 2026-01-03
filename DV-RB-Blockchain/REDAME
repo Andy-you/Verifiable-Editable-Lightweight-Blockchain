@@ -1,1 +1,242 @@
+# DV-RB：轻量可验证可编辑区块链（论文复现代码）
+
+本仓库实现并复现论文 **“A Verifiable and Redactable Blockchain with Lightweight Storage and Permission Supervision”** 中提出的双层可验证可编辑区块链（DV-RB / RRB）方案。该实现包含：
+
+- 完整的核心密码学与区块链数据结构实现（双层变色龙哈希 + 双层可检索同态标签 RHVT）  
+- 交互式命令行演示程序（Append / Query / Redaction / Audit 全流程）  
+- 生成论文性能评估图表（Fig.3a–Fig.5b）的基准测试脚本  
+
+> ⚠️ 说明：本代码主要用于科研与教学的**论文结果复现**，暂不推荐直接用于生产环境。
+
+---
+
+## 1. 仓库结构
+
+建议使用如下文件结构（与本 README 描述保持一致）：
+
+```text
+.
+├── blockchain.py          # DV-RB 核心实现（DVRSys, DVBlockchain, RHVT, DLCH 等）
+├── test_blockchain.py     # 交互式演示 & 基准测试（生成 Fig.3a–Fig.5b）
+├── README.md              # 本文件
+└── paper/                 # 可选：原论文 PDF 等
+    └── dv_rb_paper.pdf
+```
+
+> `test_blockchain.py` 默认会在当前目录自动加载 `blockchain.py` 作为实现模块，请确保文件名保持一致或自行修改脚本中的 `load_impl()`。
+
+---
+
+## 2. 环境与依赖
+
+- Python：**3.11**（推荐）  
+- 操作系统：Windows / Linux / macOS 均可
+- 依赖库：
+  - `cryptography` — RSA 等密码学原语
+  - `sympy` — 素数与数论辅助计算
+  - `matplotlib` — 绘图（生成 Fig.3–Fig.5）
+  - 标准库：`hashlib`, `secrets`, `math`, `time`, `statistics` 等
+
+### 2.1 快速安装
+
+```bash
+# 1) 建议创建虚拟环境
+python -m venv .venv
+# Windows
+.\.venv\Scripts\activate
+# Linux / macOS
+source .venv/bin/activate
+
+# 2) 安装依赖
+pip install cryptography sympy matplotlib
+```
+
+你也可以自己新建一个 `requirements.txt`：
+
+```text
+cryptography>=42.0.0
+sympy>=1.12
+matplotlib>=3.8.0
+```
+
+然后：
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 3. 快速开始（交互式演示）
+
+在项目根目录运行：
+
+```bash
+python test_blockchain.py
+```
+
+程序会加载 `blockchain.py` 并显示一个菜单：
+
+```text
+1. 初始化系统
+2. 追加区块（Append/Bind）
+3. 区块查询 Query（Proof-Gen/Verify）
+4. 区块链审计 Audit（Proof-Gen/Verify）
+5. Regular Redaction (RI) + 验证
+6. Correction Redaction (CA) + 验证
+7. 查看区块链完整信息（Dump All）
+8. 一键自动化完整演示（详尽断言输出）
+9. 生成论文图表 Benchmark（Fig.3a–Fig.5c）
+0. 退出
+```
+
+推荐体验流程：
+
+1. **初始化系统（菜单 1）**  
+   - 设置 `rsa_bits`（演示可选 1024，论文使用 2048）  
+   - 设置 `ch_q_bits`（通常 256）  
+   - 设置周期大小 `k`（如 5 / 10 / 20 / 40）  
+   - 设置标签素数位数 `u_bits`（一般 160）
+
+2. **追加区块（菜单 2）**  
+   - 指定追加区块数量 `n`、每块交易数 `#tx`、交易大小 `tx_size`  
+   - 内部会自动使用确定性随机交易（便于复现实验）
+
+3. **区块查询（菜单 3）**  
+   - 对固定高度的区块生成查询证明，并执行验证  
+   - 对应论文中的 **Query / Verify** 接口
+
+4. **区块链审计（菜单 4）**  
+   - 按照论文审计协议，对整条链进行完整性抽样验证  
+   - 对应论文中的 **Audit** 协议
+
+5. **Regular Redaction（菜单 5）**  
+   - 在保持 `h, h1, h2` 不变的前提下修改区块交易内容  
+   - 对应论文中的“常规编辑”（委员会 RI 使用内层 trapdoor）
+
+6. **Correction Redaction（菜单 6）**  
+   - 使用 CA 的外层 trapdoor 对“恶意编辑”进行更正  
+   - 体现双层权限监督的核心思想
+
+7. **一键自动演示（菜单 8）**  
+   - 自动执行 Append → Query → Audit → RI → CA → Dump 全流程  
+   - 内部带有断言检查，方便回归测试与代码自检
+
+---
+
+## 4. 复现实验与论文图表
+
+### 4.1 生成 Fig.3a–Fig.5b
+
+在根目录运行：
+
+```bash
+python demo_interactive_v6.py
+```
+
+在菜单中选择 **`9. 生成论文图表 Benchmark（Fig.3a–Fig.5c）`**，输入输出目录（如默认 `paper_figures/`）。脚本将自动：
+
+- 固定密码学参数（默认与论文一致）：
+  - `rsa_bits = 2048`
+  - `ch_q_bits = 256`
+  - `u_bits = 160`
+- 在多个 `k` 值上进行基准测试：`k ∈ {5, 10, 20, 40}`  
+- 生成如下 PNG 文件（文件名已标注对应论文图号）：
+
+```text
+paper_figures/
+├── Fig3a_System-setup.png
+├── Fig3b_Block-append_Bind.png
+├── Fig3c_Block-append_Verify.png
+├── Fig4a_Block-redaction_Redact.png
+├── Fig4b_Block-redaction_Verify.png
+├── Fig5a_Block-query_Proof-Generation.png
+└── Fig5b_Block-query_Proof-Verification.png
+```
+
+> 说明：为了控制运行时间，审计部分的 Fig.6a–6c 在代码中默认 **注释掉**。  
+> 如果需要完整复现 Fig.6，请在 `benchmark_all()` 中取消对 `_bench_fig6abc(...)` 的注释（以及下方 k-sweep 中涉及 Fig.6 的部分），注意运行时间会显著增加。
+
+### 4.2 调整基准测试参数（环境变量）
+
+`test_blockchain.py` 支持通过环境变量调整采样和重复次数，例如：
+
+- 加快测试（减少采样点 / 重复次数）：
+  ```bash
+  # 例如只做轻量测试
+  set LIGHT_REPEAT=5      # Windows CMD
+  set HEAVY_REPEAT=2
+  python test_blockchain.py
+  ```
+  或
+  ```bash
+  export LIGHT_REPEAT=5   # Linux / macOS
+  export HEAVY_REPEAT=2
+  python test_blockchain.py
+  ```
+
+常用环境变量说明（部分）：
+
+| 变量名         | 默认值 | 作用说明                                      |
+|----------------|--------|-----------------------------------------------|
+| `BENCH_RSA_BITS` | 2048 | 基准测试时的 RSA 位数                         |
+| `BENCH_Q_BITS`   | 256  | DL-CH 子群阶 `q` 的位数                       |
+| `BENCH_U_BITS`   | 160  | 标签素数 bit 长                               |
+| `TX_STEP`        | 50   | Fig.3 中横坐标（交易数）的采样步长           |
+| `IDX_STEP`       | 50   | Fig.4 中被编辑区块索引的采样步长             |
+| `BLK_STEP`       | 100  | Fig.5 中区块数采样步长                       |
+| `CHALL_STEP`     | 50   | Fig.6 中挑战块数量的采样步长                 |
+| `LIGHT_REPEAT`   | 20   | 轻量操作（如 Append、Query）的重复次数       |
+| `HEAVY_REPEAT`   | 3    | 重操作（如 Redaction、Audit）的重复次数      |
+| `WARMUP`         | 2    | 预热轮数（避免 JIT/缓存抖动）                |
+| `SMOOTH_WINDOW`  | 7    | 绘图平滑窗口大小（仅影响图像，不影响原始数据）|
+| `TX_SIZE`        | 64   | 每笔交易字节数                                |
+
+---
+
+## 5. 代码与论文的对应关系
+
+- `DVRSys`  
+  - 对应论文中的**系统初始化与密钥生成**（Setup / KeyGen）  
+  - 包含 RSA 参数、双层变色龙哈希参数、标签参数等
+
+- `DVBlockchain`  
+  - 对应论文中的**区块链数据结构与核心操作**：  
+    - `append_block()` → Bind（区块追加与双层标签绑定）  
+    - `redact_regular()` → Regular redaction（委员会 RI 执行的常规编辑）  
+    - `redact_correction()` → Correction（CA 执行的纠错编辑）  
+    - `query_prove()` / `query_verify()` → Query 协议（证明生成 / 验证）  
+    - `rhvt.audit_prove()` / `audit_verify_only()` → Audit 协议  
+
+- Block 结构  
+  - 与论文 Fig.1 中的块结构一致：  
+    `B_i = (h_{i-1}, r2,i, r1,i, Y1,i, Y2,i, spk_I, m_i, h2,i, h1,i, ctr_i, h_i)`  
+  - 内层 `h2,i`、外层 `h1,i` 与论文公式完全对应
+
+- RHVT / dual-level tags  
+  - 对应论文 Sec.2.3 与 Sec.4 中的双层可检索同态可验证标签结构  
+  - 链上存储的是常数大小的全局标签 `δ*`，实现**轻量存储**特性
+
+---
+
+## 6. 复现注意事项
+
+1. **绝对时间会略有差异**  
+   - 由于硬件环境、Python 版本、依赖库实现等原因，跑出来的数值与论文中的具体毫秒/秒数可能会有小幅偏差，但曲线形状与“随 n / k 变化的趋势”应保持一致。
+
+2. **随机性已固定**  
+   - 所有基准测试均使用确定性随机种子和预生成交易，保证多次运行之间具有可比性。
+
+3. **安全性参数**  
+   - 交互式演示时可以使用较小参数（如 RSA 1024）以提升体验速度；  
+4. **声明**
+   - 并非论文撰写者，当前代码只是对论文的基本复现尝试，性能测试代码部分可能并不完善，需要进一步结合论文进行改进，另外当前代码测出的数据与论文原版实现有所差距，可能因具体环境，硬件或细节实现部分等而有所差异
+
+## 7. 引用与致谢
+
+
+> M. Miao, X. Yang, Y. Yu, J. Wei, and G. Tian,  
+> **“A Verifiable and Redactable Blockchain with Lightweight Storage and Permission Supervision,”**  
+> *Journal of LaTeX Class Files*, vol. 14, no. 8, 2015.
+
 
