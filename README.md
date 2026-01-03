@@ -96,7 +96,7 @@ python test_blockchain.py
 
 # DV-RB：轻量可验证可编辑区块链（论文复现代码）
 
-本仓库实现并复现论文 **“A Verifiable and Redactable Blockchain with Lightweight Storage and Permission Supervision”** 中提出的双层可验证可编辑区块链（DV-RB / RRB）方案。该实现包含：
+本仓库尝试复现论文 **“A Verifiable and Redactable Blockchain with Lightweight Storage and Permission Supervision”** 中提出的双层可验证可编辑区块链（DV-RB / RRB）方案。该实现包含：
 
 - 完整的核心密码学与区块链数据结构实现（双层变色龙哈希 + 双层可检索同态标签 RHVT）  
 - 交互式命令行演示程序（Append / Query / Redaction / Audit 全流程）  
